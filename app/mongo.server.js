@@ -36,6 +36,7 @@ export async function getStoreSettings(shop) {
         shop,
         plan: "free",
         messageCount: 0,
+        systemPrompt: `You are a helpful AI customer support assistant for ${shop}. Keep your answers concise and polite.`,
         createdAt: new Date()
       }
     },
@@ -56,4 +57,20 @@ export async function incrementMessageCount(shop) {
       $set: { lastMessageAt: new Date() }
     }
   );
+}
+
+export async function updateStoreSettings(shop, settings) {
+  const database = await connectToMongoDB();
+  const stores = database.collection("stores");
+  
+  const result = await stores.findOneAndUpdate(
+    { shop },
+    {
+      $set: settings,
+      $currentDate: { updatedAt: true }
+    },
+    { returnDocument: "after" }
+  );
+  
+  return result;
 }

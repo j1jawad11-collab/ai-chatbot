@@ -45,7 +45,7 @@ export async function action({ request }) {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: `You are a helpful AI customer support assistant for a Shopify store named ${shop}. Keep your answers concise and polite.` },
+        { role: "system", content: store.systemPrompt || `You are a helpful AI customer support assistant for ${shop}. Keep your answers concise and polite.` },
         { role: "user", content: message }
       ],
       max_tokens: 250,
