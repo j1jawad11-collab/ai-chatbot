@@ -139,13 +139,14 @@ export default function Index() {
             <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
               <s-stack direction="block" gap="base">
                 <s-heading>Starter Plan</s-heading>
-                <s-paragraph><s-text>2,000 Messages / Month</s-text></s-paragraph>
+                <s-paragraph><s-text><strong>$5 / Month</strong></s-text></s-paragraph>
+                <s-paragraph><s-text>2,000 Messages</s-text></s-paragraph>
                 <s-button 
                   onClick={() => handleUpgrade("starter")}
                   disabled={store?.plan === "starter"}
                   {...(isLoading && fetcher.formData?.get("plan") === "starter" ? { loading: true } : {})}
                 >
-                  {store?.plan === "starter" ? "Current Plan" : "Upgrade to Starter"}
+                  {store?.plan === "starter" ? "Current Plan" : "Upgrade for $5"}
                 </s-button>
               </s-stack>
             </s-box>
@@ -153,6 +154,7 @@ export default function Index() {
             <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
               <s-stack direction="block" gap="base">
                 <s-heading>Pro Plan</s-heading>
+                <s-paragraph><s-text><strong>$9 / Month</strong></s-text></s-paragraph>
                 <s-paragraph><s-text>Unlimited Messages</s-text></s-paragraph>
                 <s-button 
                   variant="primary"
@@ -160,7 +162,7 @@ export default function Index() {
                   disabled={store?.plan === "pro"}
                   {...(isLoading && fetcher.formData?.get("plan") === "pro" ? { loading: true } : {})}
                 >
-                  {store?.plan === "pro" ? "Current Plan" : "Upgrade to Pro"}
+                  {store?.plan === "pro" ? "Current Plan" : "Upgrade for $9"}
                 </s-button>
               </s-stack>
             </s-box>
