@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useFetcher, useLoaderData } from "react-router";
+import { useFetcher, useLoaderData, useNavigate } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
@@ -26,12 +26,6 @@ export const action = async ({ request }) => {
     await updateStoreSettings(session.shop, { systemPrompt });
     return { success: true, message: "System prompt updated!" };
   }
-  
-  if (actionType === "upgradePlan") {
-    const plan = formData.get("plan");
-    await updateStoreSettings(session.shop, { plan });
-    return { success: true, message: `Successfully upgraded to ${plan} plan!` };
-  }
 
   return { error: "Unknown action" };
 };
@@ -39,6 +33,7 @@ export const action = async ({ request }) => {
 export default function Index() {
   const { store, apiKey, shopDomain } = useLoaderData();
   const fetcher = useFetcher();
+  const navigate = useNavigate();
   const shopify = useAppBridge();
   
   const [systemPrompt, setSystemPrompt] = useState(store?.systemPrompt || `You are a helpful AI customer support assistant for ${store?.shop}. Keep your answers concise and polite.`);
@@ -55,8 +50,9 @@ export default function Index() {
     fetcher.submit({ actionType: "updatePrompt", systemPrompt }, { method: "POST" });
   };
 
+  // Redirect to Shopify billing route — real payment flow
   const handleUpgrade = (plan) => {
-    fetcher.submit({ actionType: "upgradePlan", plan }, { method: "POST" });
+    navigate(`/app/billing?plan=${plan}`);
   };
 
   return (
