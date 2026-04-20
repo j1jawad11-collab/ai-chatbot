@@ -9,7 +9,11 @@ export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const store = await getStoreSettings(session.shop);
   
-  return { store };
+  return { 
+    store,
+    apiKey: process.env.SHOPIFY_API_KEY,
+    shopDomain: session.shop
+  };
 };
 
 export const action = async ({ request }) => {
@@ -33,7 +37,7 @@ export const action = async ({ request }) => {
 };
 
 export default function Index() {
-  const { store } = useLoaderData();
+  const { store, apiKey, shopDomain } = useLoaderData();
   const fetcher = useFetcher();
   const shopify = useAppBridge();
   
@@ -59,7 +63,28 @@ export default function Index() {
     <s-page heading="AI Chatbot Settings">
       <s-stack direction="block" gap="loose">
       
-        {/* Section 1: Overview */}
+        {/* Section 1: Storefront Widget */}
+        <s-section heading="Storefront Widget">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-paragraph>
+                <s-text>
+                  Shopify requires merchants to explicitly enable app widgets. Click the button below to open your Theme Editor with the <strong>AI Chatbot</strong> automatically toggled on, then click Save.
+                </s-text>
+              </s-paragraph>
+              <s-button 
+                variant="primary"
+                onClick={() => {
+                  window.open(`https://${shopDomain}/admin/themes/current/editor?context=apps&appEmbed=${apiKey}/chatbot`, '_blank');
+                }}
+              >
+                Enable Widget in Theme Editor
+              </s-button>
+            </s-stack>
+          </s-box>
+        </s-section>
+
+        {/* Section 2: Overview */}
         <s-section heading="Current Plan & Usage">
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
