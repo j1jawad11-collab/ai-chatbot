@@ -6,10 +6,10 @@ let db;
 export async function connectToMongoDB() {
   if (db) return db;
 
-  const uri = process.env.MONGODB_URI;
+  const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
   
   if (!uri) {
-    throw new Error("MONGODB_URI environment variable is not defined");
+    throw new Error("MONGO_URI environment variable is not defined");
   }
 
   if (!mongoClient) {
@@ -19,8 +19,8 @@ export async function connectToMongoDB() {
     await mongoClient.connect();
   }
 
-  // Use the default database specified in the connection string or fallback to 'shopify_chatbot'
-  db = mongoClient.db(); 
+  // Explicitly connect to the 'chatbot' database
+  db = mongoClient.db("chatbot"); 
   return db;
 }
 
