@@ -1,32 +1,23 @@
-import { redirect } from "react-router";
-import { authenticate, billing } from "../shopify.server";
-import { updateStoreSettings } from "../mongo.server.js";
+import { authenticate } from "../shopify.server";
 
-// Map plan name -> MongoDB plan value
-const PLAN_MAP = {
-  "Starter Plan": "starter",
-  "Pro Plan": "pro",
-};
-
-// Called when merchant clicks an upgrade button
-// ?plan=starter or ?plan=pro
+// Called when merchant clicks an upgrade button: /app/billing?plan=starter|pro
 export const loader = async ({ request }) => {
-  const { session, billing } = await authenticate.admin(request);
+  // 'billing' comes from authenticate.admin(), NOT from shopify.server exports
+  const { billing, session } = await authenticate.admin(request);
   const url = new URL(request.url);
   const planParam = url.searchParams.get("plan"); // 'starter' | 'pro'
 
-  // Map param -> billing plan name
   const planName = planParam === "starter" ? "Starter Plan" : "Pro Plan";
 
-  // Initiate subscription — Shopify redirects merchant to confirm payment
+  // billing.request() throws a redirect response — Shopify takes over from here
   await billing.request({
     plan: planName,
-    isTest: true, // change to false for production
+    isTest: true, // Set to false before going live
     returnUrl: `${process.env.SHOPIFY_APP_URL}/app/billing/confirm?plan=${planParam}&shop=${session.shop}`,
   });
 
-  // billing.request() handles the redirect itself, but just in case:
-  return redirect("/app");
+  // Never reached — billing.request() always redirects
+  return new Response(null, { status: 204 });
 };
 
 export default function Billing() {

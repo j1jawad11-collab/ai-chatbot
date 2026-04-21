@@ -9,10 +9,14 @@ export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const store = await getStoreSettings(session.shop);
   
+  // Extension UID from extensions/storefront-widget/shopify.extension.toml
+  const EXTENSION_UID = "7dc0718b-e9d2-1da8-8d73-2115d652f357e9537189";
+
   return { 
     store,
-    apiKey: process.env.SHOPIFY_API_KEY,
-    shopDomain: session.shop
+    shopDomain: session.shop,
+    // Deep link to enable the App Embed block in the merchant's theme editor
+    themeEditorUrl: `https://${session.shop}/admin/themes/current/editor?context=apps&activateAppId=${EXTENSION_UID}/chatbot`,
   };
 };
 
@@ -31,7 +35,7 @@ export const action = async ({ request }) => {
 };
 
 export default function Index() {
-  const { store, apiKey, shopDomain } = useLoaderData();
+  const { store, themeEditorUrl } = useLoaderData();
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const shopify = useAppBridge();
@@ -71,7 +75,8 @@ export default function Index() {
               <s-button 
                 variant="primary"
                 onClick={() => {
-                  window.open(`https://${shopDomain}/admin/themes/current/editor?context=apps&appEmbed=${apiKey}/chatbot`, '_blank');
+                  // _top breaks out of Shopify's iframe so the new page loads correctly
+                  window.open(themeEditorUrl, '_top');
                 }}
               >
                 Enable Widget in Theme Editor
