@@ -6,14 +6,38 @@ import { authenticate } from "../shopify.server";
 import { getStoreSettings, updateStoreSettings } from "../mongo.server.js";
 
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
+  const { session, admin } = await authenticate.admin(request);
   const store = await getStoreSettings(session.shop);
+
+  // Fetch the published theme ID from Shopify Admin API
+  let themeEditorUrl = `https://${session.shop}/admin/themes`;
+  try {
+    const response = await admin.graphql(
+      `#graphql
+      query getPublishedTheme {
+        themes(first: 10, roles: [MAIN]) {
+          nodes {
+            id
+            role
+          }
+        }
+      }`
+    );
+    const data = await response.json();
+    const theme = data?.data?.themes?.nodes?.[0];
+    if (theme?.id) {
+      // Extract numeric ID from gid://shopify/OnlineStoreTheme/145471209555
+      const numericId = theme.id.split("/").pop();
+      themeEditorUrl = `https://${session.shop}/admin/themes/${numericId}/editor?context=apps`;
+    }
+  } catch (e) {
+    console.error("Could not fetch theme ID:", e.message);
+  }
 
   return { 
     store,
     shopDomain: session.shop,
-    // Opens the App Embeds panel in the merchant's Theme Editor
-    themeEditorUrl: `https://${session.shop}/admin/themes/current/editor?context=apps`,
+    themeEditorUrl,
   };
 };
 
