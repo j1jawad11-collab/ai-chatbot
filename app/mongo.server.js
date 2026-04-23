@@ -42,7 +42,9 @@ export async function getStoreSettings(shop) {
     },
     { upsert: true, returnDocument: "after" }
   );
-  
+  if (result) {
+    return { ...result, _id: result._id.toString() };
+  }
   return result;
 }
 
@@ -71,6 +73,8 @@ export async function updateStoreSettings(shop, settings) {
     },
     { returnDocument: "after" }
   );
-  
+  if (result) {
+    return { ...result, _id: result._id.toString() };
+  }
   return result;
 }
