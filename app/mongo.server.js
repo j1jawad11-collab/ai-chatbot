@@ -37,6 +37,10 @@ export async function getStoreSettings(shop) {
         plan: "free",
         messageCount: 0,
         systemPrompt: `You are a helpful AI customer support assistant for ${shop}. Keep your answers concise and polite.`,
+        websiteUrl: "",
+        faqs: "",
+        productCache: [],
+        productCacheAt: null,
         createdAt: new Date()
       }
     },
@@ -77,4 +81,34 @@ export async function updateStoreSettings(shop, settings) {
     return { ...result, _id: result._id.toString() };
   }
   return result;
+}
+
+// Product cache TTL: 1 hour (3600000 ms)
+const PRODUCT_CACHE_TTL = 3600000;
+
+export async function getCachedProducts(shop) {
+  const database = await connectToMongoDB();
+  const stores = database.collection("stores");
+  const doc = await stores.findOne(
+    { shop },
+    { projection: { productCache: 1, productCacheAt: 1 } }
+  );
+
+  if (
+    doc?.productCache?.length > 0 &&
+    doc.productCacheAt &&
+    Date.now() - new Date(doc.productCacheAt).getTime() < PRODUCT_CACHE_TTL
+  ) {
+    return doc.productCache;
+  }
+  return null; // Cache miss — caller must fetch fresh
+}
+
+export async function setCachedProducts(shop, products) {
+  const database = await connectToMongoDB();
+  const stores = database.collection("stores");
+  await stores.updateOne(
+    { shop },
+    { $set: { productCache: products, productCacheAt: new Date() } }
+  );
 }

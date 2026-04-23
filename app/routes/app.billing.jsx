@@ -12,7 +12,7 @@ export const loader = async ({ request }) => {
   // billing.request() throws a redirect response — Shopify takes over from here
   await billing.request({
     plan: planName,
-    isTest: true, // Set to false before going live
+    isTest: false,
     returnUrl: `${process.env.SHOPIFY_APP_URL}/app/billing/confirm?plan=${planParam}&shop=${session.shop}`,
   });
 

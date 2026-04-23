@@ -17,7 +17,7 @@ export const loader = async ({ request }) => {
     // Verify the subscription is active before saving to MongoDB
     const { hasActivePayment, appSubscriptions } = await billing.check({
       plans: [planName],
-      isTest: true,
+      isTest: false,
     });
 
     if (hasActivePayment) {
