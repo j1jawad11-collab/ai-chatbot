@@ -4,8 +4,10 @@ import {
   AppDistribution,
   shopifyApp,
 } from "@shopify/shopify-app-react-router/server";
-import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import prisma from "./db.server";
+import { MongoDBSessionStorage } from "@shopify/shopify-app-session-storage-mongodb";
+
+// Note: MongoDB requires the full URI including the scheme
+const mongoUrl = process.env.MONGO_URI || process.env.MONGODB_URI;
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -14,7 +16,7 @@ const shopify = shopifyApp({
   scopes: process.env.SCOPES?.split(","),
   appUrl: process.env.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
-  sessionStorage: new PrismaSessionStorage(prisma),
+  sessionStorage: new MongoDBSessionStorage(mongoUrl, "chatbot"),
   distribution: AppDistribution.AppStore,
   billing: {
     "Starter Plan": {
@@ -49,3 +51,4 @@ export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
+

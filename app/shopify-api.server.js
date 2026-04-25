@@ -1,25 +1,25 @@
 /**
  * shopify-api.server.js
  * Helpers for calling the Shopify Admin REST API using the offline session
- * stored in the Prisma (SQLite) database by the Shopify auth library.
+ * stored in the MongoDB database by the Shopify auth library.
  *
  * These functions are used inside the App Proxy chat endpoint (api.chat.jsx)
  * where there is no live admin session — only the shop domain from the request body.
  */
 
-import prisma from "./db.server.js";
+import { connectToMongoDB } from "./mongo.server.js";
 
 const API_VERSION = "2025-10";
 
 /**
- * Retrieve the offline access token for a shop from Prisma.
+ * Retrieve the offline access token for a shop from MongoDB.
  * Shopify stores the offline session with isOnline = false.
  */
 async function getOfflineToken(shop) {
-  const session = await prisma.session.findFirst({
-    where: { shop, isOnline: false },
-    select: { accessToken: true },
-  });
+  const database = await connectToMongoDB();
+  const sessions = database.collection("shopify_sessions");
+  
+  const session = await sessions.findOne({ shop, isOnline: false });
   return session?.accessToken ?? null;
 }
 
