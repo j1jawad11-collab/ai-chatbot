@@ -1,5 +1,5 @@
 import { authenticate } from "../shopify.server";
-import db from "../db.server";
+import { connectToMongoDB } from "../mongo.server.js";
 
 export const action = async ({ request }) => {
   const { payload, session, topic, shop } = await authenticate.webhook(request);
@@ -8,15 +8,15 @@ export const action = async ({ request }) => {
   const current = payload.current;
 
   if (session) {
-    await db.session.update({
-      where: {
-        id: session.id,
-      },
-      data: {
-        scope: current.toString(),
-      },
-    });
+    const database = await connectToMongoDB();
+    const sessions = database.collection("shopify_sessions");
+    
+    await sessions.updateOne(
+      { id: session.id },
+      { $set: { scope: current.toString() } }
+    );
   }
 
   return new Response();
 };
+
