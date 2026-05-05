@@ -135,18 +135,7 @@ export async function action({ request }) {
     // 1. Get Store Settings & Usage from MongoDB
     const store = await getStoreSettings(shop);
 
-    // 2. Check plan limits (Free: 250 messages)
-    if (store.plan === "free" && store.messageCount >= 250) {
-      return Response.json(
-        {
-          reply:
-            "You have reached your monthly limit of 250 messages on the free plan. Please upgrade to continue using the AI Chatbot.",
-        },
-        { status: 403, headers: corsHeaders }
-      );
-    }
-
-    // 3. Fetch product catalog (use MongoDB cache first, fallback to Shopify API)
+    // 2. Fetch product catalog (use MongoDB cache first, fallback to Shopify API)
     let products = await getCachedProducts(shop);
     if (!products) {
       products = await fetchStoreProducts(shop);

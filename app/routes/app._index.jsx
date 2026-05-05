@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useFetcher, useLoaderData, useNavigate } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
@@ -40,7 +40,6 @@ export const action = async ({ request }) => {
 export default function Index() {
   const { store, themeEditorUrl } = useLoaderData();
   const fetcher = useFetcher();
-  const navigate = useNavigate();
   const shopify = useAppBridge();
   
   const [systemPrompt, setSystemPrompt] = useState(
@@ -66,10 +65,7 @@ export default function Index() {
     fetcher.submit({ actionType: "updateTraining", websiteUrl, faqs }, { method: "POST" });
   };
 
-  // Redirect to Shopify billing route — real payment flow
-  const handleUpgrade = (plan) => {
-    navigate(`/app/billing?plan=${plan}`);
-  };
+
 
   const inputStyle = {
     width: "100%",
@@ -112,22 +108,11 @@ export default function Index() {
           </s-box>
         </s-section>
 
-        {/* ── Section 2: Plan & Usage ── */}
-        <s-section heading="Current Plan & Usage">
+        <s-section heading="Usage">
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-paragraph>
-                <s-text><strong>Current Plan:</strong> {store?.plan?.toUpperCase() || "FREE"}</s-text>
-              </s-paragraph>
-              <s-paragraph>
-                <s-text>
-                  <strong>Messages Used:</strong> {store?.messageCount || 0} /{" "}
-                  {store?.plan === "free"
-                    ? "250"
-                    : store?.plan === "starter"
-                    ? "2,000"
-                    : "Unlimited"}
-                </s-text>
+                <s-text><strong>Messages Used:</strong> {store?.messageCount || 0}</s-text>
               </s-paragraph>
             </s-stack>
           </s-box>
@@ -250,45 +235,6 @@ export default function Index() {
           </s-box>
         </s-section>
 
-        {/* ── Section 5: Upgrade Plans ── */}
-        <s-section heading="Upgrade Plan">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "16px" }}>
-            <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
-              <s-stack direction="block" gap="base">
-                <s-heading>Starter Plan</s-heading>
-                <s-paragraph><s-text><strong>$5 / Month</strong></s-text></s-paragraph>
-                <s-paragraph><s-text>2,000 Messages</s-text></s-paragraph>
-                <s-button
-                  onClick={() => handleUpgrade("starter")}
-                  disabled={store?.plan === "starter"}
-                  {...(isLoading && fetcher.formData?.get("plan") === "starter"
-                    ? { loading: true }
-                    : {})}
-                >
-                  {store?.plan === "starter" ? "Current Plan" : "Upgrade for $5"}
-                </s-button>
-              </s-stack>
-            </s-box>
-
-            <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
-              <s-stack direction="block" gap="base">
-                <s-heading>Pro Plan</s-heading>
-                <s-paragraph><s-text><strong>$9 / Month</strong></s-text></s-paragraph>
-                <s-paragraph><s-text>Unlimited Messages</s-text></s-paragraph>
-                <s-button
-                  variant="primary"
-                  onClick={() => handleUpgrade("pro")}
-                  disabled={store?.plan === "pro"}
-                  {...(isLoading && fetcher.formData?.get("plan") === "pro"
-                    ? { loading: true }
-                    : {})}
-                >
-                  {store?.plan === "pro" ? "Current Plan" : "Upgrade for $9"}
-                </s-button>
-              </s-stack>
-            </s-box>
-          </div>
-        </s-section>
 
       </s-stack>
     </s-page>

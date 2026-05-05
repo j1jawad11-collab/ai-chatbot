@@ -34,7 +34,6 @@ export async function getStoreSettings(shop) {
     {
       $setOnInsert: {
         shop,
-        plan: "free",
         messageCount: 0,
         systemPrompt: `You are a helpful AI customer support assistant for ${shop}. Keep your answers concise and polite.`,
         websiteUrl: "",
