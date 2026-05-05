@@ -13,6 +13,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+// Demo message limit when merchant hasn't added their own key
+const DEMO_MESSAGE_LIMIT = 50;
+
 // Primary and fallback models
 const MODELS = [
   "gpt-oss-20b",
@@ -24,15 +27,16 @@ const MODELS = [
 
 /**
  * Try each model in sequence until one succeeds.
+ * apiKey is resolved per-request (merchant key OR demo key) — never hardcoded.
  */
-async function callOpenRouter(messages, modelIndex = 0) {
+async function callOpenRouter(messages, apiKey, modelIndex = 0) {
   if (modelIndex >= MODELS.length) {
     throw new Error("All models failed. Please try again later.");
   }
 
   const model = MODELS[modelIndex];
   const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey,
     baseURL: process.env.OPENAI_BASE_URL || "https://openrouter.ai/api/v1",
     defaultHeaders: {
       "HTTP-Referer": "https://shopify-ai-chatbot.app",
@@ -49,7 +53,7 @@ async function callOpenRouter(messages, modelIndex = 0) {
     return completion.choices[0].message.content;
   } catch (error) {
     console.warn(`Model ${model} failed (${error.message}), trying fallback...`);
-    return callOpenRouter(messages, modelIndex + 1);
+    return callOpenRouter(messages, apiKey, modelIndex + 1);
   }
 }
 
@@ -79,25 +83,20 @@ function buildProductContext(products) {
  * Build the full enriched system prompt from store settings + live data.
  */
 function buildSystemPrompt(store, products, order) {
-  // Base prompt from merchant settings
   let prompt =
     store.systemPrompt ||
     `You are a helpful AI customer support assistant for this store. Keep your answers concise and polite.`;
 
-  // Website reference
   if (store.websiteUrl) {
     prompt += `\n\n## Store Website\n${store.websiteUrl}`;
   }
 
-  // FAQs / training data
   if (store.faqs && store.faqs.trim()) {
     prompt += `\n\n## Store FAQs & Policies\n${store.faqs.trim()}`;
   }
 
-  // Product catalog context
   prompt += buildProductContext(products);
 
-  // Order context (only injected when the customer asked about a specific order)
   if (order) {
     prompt += `\n\n## Order Lookup Result\nOrder ${order.name}: Payment — ${order.financialStatus}, Shipping — ${order.fulfillmentStatus}, Items — ${order.items}, Placed on ${order.createdAt}. Share this with the customer accurately.`;
   }
@@ -132,10 +131,35 @@ export async function action({ request }) {
       );
     }
 
-    // 1. Get Store Settings & Usage from MongoDB
+    // 1. Load store settings from MongoDB
     const store = await getStoreSettings(shop);
 
-    // 2. Fetch product catalog (use MongoDB cache first, fallback to Shopify API)
+    // 2. Decide which API key to use — resolved server-side, never exposed to client
+    const usingMerchantKey = !!(store.userApiKey && store.userApiKey.trim());
+    const apiKey = usingMerchantKey
+      ? store.userApiKey.trim()
+      : process.env.DEMO_AI_KEY;
+
+    if (!apiKey) {
+      return Response.json(
+        { error: "AI service is not configured. Please contact support." },
+        { status: 503, headers: corsHeaders }
+      );
+    }
+
+    // 3. Enforce demo message limit (only applies when using the shared demo key)
+    if (!usingMerchantKey && store.messageCount >= DEMO_MESSAGE_LIMIT) {
+      return Response.json(
+        {
+          reply:
+            `You've reached the ${DEMO_MESSAGE_LIMIT}-message demo limit. ` +
+            "The store owner can add their own AI API key in the chatbot settings to remove this limit.",
+        },
+        { status: 403, headers: corsHeaders }
+      );
+    }
+
+    // 4. Fetch product catalog (MongoDB cache → Shopify API fallback)
     let products = await getCachedProducts(shop);
     if (!products) {
       products = await fetchStoreProducts(shop);
@@ -144,25 +168,25 @@ export async function action({ request }) {
       }
     }
 
-    // 4. Detect order tracking intent & fetch order if needed
+    // 5. Detect order tracking intent & fetch order if needed
     let order = null;
     const orderNumber = extractOrderNumber(message);
     if (orderNumber) {
       order = await fetchOrderByNumber(shop, orderNumber);
     }
 
-    // 5. Build enriched system prompt
+    // 6. Build enriched system prompt
     const systemPrompt = buildSystemPrompt(store, products, order);
 
-    // 6. Call OpenRouter with full context
-    const messages = [
+    // 7. Call OpenRouter with the resolved API key
+    const chatMessages = [
       { role: "system", content: systemPrompt },
       { role: "user", content: message },
     ];
 
-    const reply = await callOpenRouter(messages);
+    const reply = await callOpenRouter(chatMessages, apiKey);
 
-    // 7. Track usage in MongoDB
+    // 8. Track usage in MongoDB (always, regardless of key source)
     await incrementMessageCount(shop);
 
     return Response.json({ reply }, { headers: corsHeaders });

@@ -34,6 +34,7 @@ export async function getStoreSettings(shop) {
     {
       $setOnInsert: {
         shop,
+        userApiKey: "",        // merchant's own OpenRouter/OpenAI key (empty = demo mode)
         messageCount: 0,
         systemPrompt: `You are a helpful AI customer support assistant for ${shop}. Keep your answers concise and polite.`,
         websiteUrl: "",

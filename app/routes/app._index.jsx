@@ -34,6 +34,12 @@ export const action = async ({ request }) => {
     return { success: true, message: "Training data saved! The chatbot will use it on the next message." };
   }
 
+  if (actionType === "updateAiKey") {
+    const userApiKey = formData.get("userApiKey") ?? "";
+    await updateStoreSettings(session.shop, { userApiKey: userApiKey.trim() });
+    return { success: true, message: userApiKey.trim() ? "AI key saved! Your own key is now active." : "AI key cleared. Using demo mode." };
+  }
+
   return { error: "Unknown action" };
 };
 
@@ -48,6 +54,8 @@ export default function Index() {
   );
   const [websiteUrl, setWebsiteUrl] = useState(store?.websiteUrl || "");
   const [faqs, setFaqs] = useState(store?.faqs || "");
+  // userApiKey is write-only in UI — never pre-filled to avoid leaking the key
+  const [userApiKey, setUserApiKey] = useState("");
 
   const isLoading = ["loading", "submitting"].includes(fetcher.state);
 
@@ -63,6 +71,11 @@ export default function Index() {
 
   const handleSaveTraining = () => {
     fetcher.submit({ actionType: "updateTraining", websiteUrl, faqs }, { method: "POST" });
+  };
+
+  const handleSaveAiKey = () => {
+    fetcher.submit({ actionType: "updateAiKey", userApiKey }, { method: "POST" });
+    setUserApiKey(""); // clear field after save for security
   };
 
 
@@ -112,7 +125,17 @@ export default function Index() {
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-paragraph>
-                <s-text><strong>Messages Used:</strong> {store?.messageCount || 0}</s-text>
+                <s-text>
+                  <strong>Messages Used:</strong> {store?.messageCount || 0}
+                  {!store?.userApiKey && (
+                    <> &nbsp;/ 50 (demo limit — add your AI key below to remove limits)</>
+                  )}
+                </s-text>
+              </s-paragraph>
+              <s-paragraph>
+                <s-text tone="subdued">
+                  Mode: {store?.userApiKey ? "✅ Your own AI key" : "🔓 Demo mode (shared key, 50 msg limit)"}
+                </s-text>
               </s-paragraph>
             </s-stack>
           </s-box>
@@ -235,6 +258,67 @@ export default function Index() {
           </s-box>
         </s-section>
 
+
+        {/* ── Section 5: AI Settings ── */}
+        <s-section heading="AI Settings">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-paragraph>
+                <s-text>
+                  Add your own <strong>OpenRouter API key</strong> to use your own AI quota with no message limits.
+                  Get a free key at{" "}
+                  <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">openrouter.ai/keys</a>.
+                </s-text>
+              </s-paragraph>
+              <s-paragraph>
+                <s-text tone="subdued">
+                  Your key is stored securely on the server and is never exposed to the storefront.
+                  Leave blank to keep using the shared demo key (50 message limit).
+                </s-text>
+              </s-paragraph>
+              <s-paragraph>
+                <s-text>
+                  <strong>Status:</strong>{" "}
+                  {store?.userApiKey
+                    ? "✅ Your own AI key is active"
+                    : "🔓 Using demo key (limited)"}
+                </s-text>
+              </s-paragraph>
+              <div style={{ width: "100%", marginBottom: "0.5rem" }}>
+                <input
+                  type="password"
+                  value={userApiKey}
+                  onChange={(e) => setUserApiKey(e.target.value)}
+                  placeholder={store?.userApiKey ? "••••••••••••••••  (key saved — paste new to replace)" : "sk-or-v1-..."}
+                  style={inputStyle}
+                  autoComplete="off"
+                />
+              </div>
+              <s-inline gap="base">
+                <s-button
+                  variant="primary"
+                  onClick={handleSaveAiKey}
+                  {...(isLoading && fetcher.formData?.get("actionType") === "updateAiKey"
+                    ? { loading: true }
+                    : {})}
+                >
+                  Save AI Key
+                </s-button>
+                {store?.userApiKey && (
+                  <s-button
+                    tone="critical"
+                    onClick={() => {
+                      setUserApiKey("");
+                      fetcher.submit({ actionType: "updateAiKey", userApiKey: "" }, { method: "POST" });
+                    }}
+                  >
+                    Remove Key (use demo)
+                  </s-button>
+                )}
+              </s-inline>
+            </s-stack>
+          </s-box>
+        </s-section>
 
       </s-stack>
     </s-page>
