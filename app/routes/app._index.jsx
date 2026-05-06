@@ -265,9 +265,12 @@ export default function Index() {
             <s-stack direction="block" gap="base">
               <s-paragraph>
                 <s-text>
-                  Add your own <strong>OpenRouter API key</strong> to use your own AI quota with no message limits.
-                  Get a free key at{" "}
-                  <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">openrouter.ai/keys</a>.
+                  Add your own <strong>AI API key</strong> to use your own quota with no message limits.
+                  Accepted providers:
+                  <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">OpenRouter</a>
+                  (free models available) or
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">OpenAI</a>
+                  (GPT-4o, etc.).
                 </s-text>
               </s-paragraph>
               <s-paragraph>
@@ -280,8 +283,8 @@ export default function Index() {
                 <s-text>
                   <strong>Status:</strong>{" "}
                   {store?.userApiKey
-                    ? "✅ Your own AI key is active"
-                    : "🔓 Using demo key (limited)"}
+                    ? "✅ Your own AI key is active — no limits"
+                    : "🔓 Using demo key (50 message limit)"}
                 </s-text>
               </s-paragraph>
               <div style={{ width: "100%", marginBottom: "0.5rem" }}>
@@ -289,7 +292,7 @@ export default function Index() {
                   type="password"
                   value={userApiKey}
                   onChange={(e) => setUserApiKey(e.target.value)}
-                  placeholder={store?.userApiKey ? "••••••••••••••••  (key saved — paste new to replace)" : "sk-or-v1-..."}
+                  placeholder={store?.userApiKey ? "••••••••••••••••  (key saved — paste new to replace)" : "sk-or-v1-...  or  sk-proj-..."}
                   style={inputStyle}
                   autoComplete="off"
                 />

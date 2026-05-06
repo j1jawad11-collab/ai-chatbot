@@ -1,6 +1,8 @@
 {
-  "t:settings.bot_name.label":  "Bot Name",
-  "t:settings.greeting.label":  "Greeting Message",
-  "t:settings.accent_color.label": "Accent Color",
-  "t:settings.position.label":  "Widget Position"
+  "settings": {
+    "bot_name":    { "label": "Bot Name" },
+    "greeting":    { "label": "Greeting Message" },
+    "accent_color":{ "label": "Accent Color" },
+    "position":    { "label": "Widget Position" }
+  }
 }
