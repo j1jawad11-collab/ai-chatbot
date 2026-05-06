@@ -1,5 +1,6 @@
 {
-  "chatbot": {
-    "name": "Chatbot"
-  }
+  "t:settings.bot_name.label":  "Bot Name",
+  "t:settings.greeting.label":  "Greeting Message",
+  "t:settings.accent_color.label": "Accent Color",
+  "t:settings.position.label":  "Widget Position"
 }
